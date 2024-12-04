@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.exception.DocumentNotFoundException;
 import com.example.demo.model.dto.CreateDocumentDTO;
 import com.example.demo.model.dto.DocumentDTO;
 import com.example.demo.model.dto.UpdateDocumentDTO;
@@ -84,8 +85,7 @@ public class DocumentController {
                             document.getTitle(),
                             document.getCreatedAt(),
                             document.getUpdatedAt(),
-                            document.getContent().getHtmlContent(),
-                            "http://localhost:5173/documents/search/" + document.getDocumentId() // 构造跳转链接
+                            document.getContent().getHtmlContent()
                             ))
                     .collect(Collectors.toList());
 
@@ -97,8 +97,8 @@ public class DocumentController {
     }
 
  // 查詢單一文檔
-    @GetMapping("/search/{documentId}")
-    public ResponseEntity<DocumentDTO> getDocument(@PathVariable Integer documentId) {
+    @GetMapping("/read")
+    public ResponseEntity<DocumentDTO> getDocument(@RequestParam Integer documentId) {
         try {
             // 呼叫 DocumentService 查詢指定 ID 的文檔
             Document document = documentService.getDocumentById(documentId);
@@ -118,10 +118,11 @@ public class DocumentController {
                     document.getContent().getHtmlContent()
             );
 
-            return new ResponseEntity<>(documentDTO, HttpStatus.OK); // 返回 200 OK 和文檔信息
+            return new ResponseEntity<>(documentDTO, HttpStatus.OK);
+        } catch (DocumentNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 找不到文档时返回 404
         } catch (Exception e) {
-            // 返回 500 错误
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 其他异常返回 500
         }
     }
 
