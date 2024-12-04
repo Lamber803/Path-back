@@ -16,4 +16,17 @@ public class DocumentDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String htmlContent;  // 若不想在 DocumentDTO 裡包含內容，也可以傳回 ContentDTO。
+    private String url; // The URL you want to pass
+    
+    public DocumentDTO(Integer documentId, Integer userId, String title,
+            LocalDateTime createdAt, LocalDateTime updatedAt,
+            String htmlContent) {
+this.documentId = documentId;
+this.userId = userId;
+this.title = title;
+this.createdAt = createdAt;
+this.updatedAt = updatedAt;
+this.htmlContent = htmlContent;
+this.url = url;
+}
 }

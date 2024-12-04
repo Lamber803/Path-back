@@ -47,7 +47,7 @@ return http.csrf(csrf -> csrf.disable()) //關閉了 CSRF 保護
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 允許來自 localhost:3000 的請求
+        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // 允許來自 localhost:5173 的請求
         configuration.setAllowedMethods(List.of(HttpMethod.OPTIONS.name(),HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(), HttpMethod.DELETE.name())); // 允許的 HTTP 方法
         configuration.setAllowedHeaders(List.of("*")); // 允許所有請求頭
         configuration.setAllowCredentials(true); // 允許攜帶憑證

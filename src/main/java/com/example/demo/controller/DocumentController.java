@@ -21,7 +21,6 @@ public class DocumentController {
 
     @Autowired
     private DocumentService documentService;
-
     @Autowired
     private UserService userService;  // 假設您有 UserService 來處理使用者相關邏輯
 
@@ -71,7 +70,7 @@ public class DocumentController {
 
 
     // 查詢所有文檔（假設是查詢當前用戶的文檔）
-    @GetMapping
+    @GetMapping("/search")
     public ResponseEntity<List<DocumentDTO>> getDocuments(@RequestParam Integer userId) {
         try {
             // 呼叫 DocumentService 查詢該用戶的所有文檔
@@ -85,8 +84,9 @@ public class DocumentController {
                             document.getTitle(),
                             document.getCreatedAt(),
                             document.getUpdatedAt(),
-                            document.getContent().getHtmlContent()
-                    ))
+                            document.getContent().getHtmlContent(),
+                            "http://localhost:5173/documents/search/" + document.getDocumentId() // 构造跳转链接
+                            ))
                     .collect(Collectors.toList());
 
             return new ResponseEntity<>(documentDTOs, HttpStatus.OK);
@@ -96,8 +96,8 @@ public class DocumentController {
         }
     }
 
-    // 查詢單一文檔
-    @GetMapping("/{documentId}")
+ // 查詢單一文檔
+    @GetMapping("/search/{documentId}")
     public ResponseEntity<DocumentDTO> getDocument(@PathVariable Integer documentId) {
         try {
             // 呼叫 DocumentService 查詢指定 ID 的文檔
@@ -105,7 +105,7 @@ public class DocumentController {
 
             // 檢查文檔是否存在
             if (document == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 如果找不到文檔，返回 404
             }
 
             // 將 Document 實體轉換成 DocumentDTO 並返回
@@ -118,15 +118,16 @@ public class DocumentController {
                     document.getContent().getHtmlContent()
             );
 
-            return new ResponseEntity<>(documentDTO, HttpStatus.OK);
+            return new ResponseEntity<>(documentDTO, HttpStatus.OK); // 返回 200 OK 和文檔信息
         } catch (Exception e) {
-            // 返回 500 錯誤
+            // 返回 500 错误
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+
     // 更新文檔
-    @PutMapping("/{documentId}")
+    @PutMapping("/update/{documentId}")
     public ResponseEntity<DocumentDTO> updateDocument(@PathVariable Integer documentId,
                                                       @RequestBody UpdateDocumentDTO updateDocumentDTO) {
         try {
