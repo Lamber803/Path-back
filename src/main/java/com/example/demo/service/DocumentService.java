@@ -4,8 +4,10 @@ import com.example.demo.model.dto.CreateDocumentDTO;
 import com.example.demo.model.dto.UpdateDocumentDTO;
 import com.example.demo.model.entity.Document;
 import com.example.demo.model.entity.User;
+import com.example.demo.model.entity.Attachment;
 import com.example.demo.model.entity.Content;
 import com.example.demo.repository.DocumentRepository;
+import com.example.demo.repository.AttachmentRepository;
 import com.example.demo.repository.ContentRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,61 +29,91 @@ public class DocumentService {
     private ContentRepository contentRepository;
     
     @Autowired
-    private FileService fileService;
+    private AttachmentService attachmentService;
+    
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+    
+ // 判断文件类型的方法
+    private Attachment.FileType determineFileType(MultipartFile file) {
+        // 获取文件的 MIME 类型
+        String contentType = file.getContentType();
+
+        // 如果是图像文件，返回 IMAGE 类型
+        if (contentType != null && contentType.startsWith("image")) {
+            return Attachment.FileType.IMAGE;
+        }
+
+        // 否则，返回 FILE 类型
+        return Attachment.FileType.FILE;
+    }
+
+
 
     @Autowired
     private UserRepository userRepository;  // 用於查找用戶
 
     // 創建新文檔
     public Document createDocument(Integer userId, CreateDocumentDTO createDocumentDTO, List<MultipartFile> files) {
-        // 查找用戶
+        // 查找用户
         Optional<User> userOptional = userRepository.findById(userId);
         if (userOptional.isEmpty()) {
-            throw new RuntimeException("找不到 ID 為 " + userId + " 的使用者");
+            throw new RuntimeException("找不到 ID 为 " + userId + " 的用户");
         }
 
-        User user = userOptional.get();  // 獲取 User 物件
+        User user = userOptional.get();  // 获取 User 对象
 
-        // 創建 Document 實體
+        // 创建 Document 实体
         Document document = new Document();
-        document.setUser(user);  // 設置 User 實體
+        document.setUser(user);  // 设置 User 实体
         document.setTitle(createDocumentDTO.getTitle());
         document.setCreatedAt(LocalDateTime.now());
         document.setUpdatedAt(LocalDateTime.now());
 
-        
-
-        // 處理文件上傳
+        // 获取 HTML 内容
         String htmlContent = createDocumentDTO.getHtmlContent();
 
-        // 如果有文件上傳，處理圖片或檔案 URL
+        // 如果有文件上传，处理图片或文件 URL
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {
                 try {
-                    // 上傳檔案並獲得 URL
-                    String fileUrl = fileService.uploadFile(file);
+                    // 上传文件并获取 URL
+                    String fileUrl = attachmentService.uploadFile(file);  // 上传文件服务，返回可访问的 URL（HTTP/HTTPS）
 
-                    // 替換 HTML 中的圖片或檔案 URL
-                    // 假設 HTML 中的文件 URL 使用 `file://` 格式
-                    htmlContent = htmlContent.replace("file://", fileUrl);
+                    // 处理 Blob URL 替换
+                    htmlContent = htmlContent.replace("blob://", fileUrl);
+
+                    // 创建附件并保存
+                    Attachment attachment = new Attachment();
+                    attachment.setDocument(document);
+                    attachment.setFileName(file.getOriginalFilename());
+                    attachment.setFileUrl(fileUrl);
+                    attachment.setFileSize(file.getSize());
+                    attachment.setFileType(determineFileType(file));  // 根据 MIME 类型设置文件类型
+
+                    // 保存附件信息到数据库
+                    attachmentRepository.save(attachment);
+
                 } catch (IOException e) {
-                    throw new RuntimeException("文件上傳失敗", e);
+                    throw new RuntimeException("文件上传失败", e);
                 }
             }
         }
 
-        // 創建並儲存文檔內容
+        // 创建并保存文档内容
         Content content = new Content();
         content.setHtmlContent(htmlContent);
-        content.setDocument(document);  // 將內容與文檔關聯
-        document.setContent(content);    // 設置 Document 的 Content
-        
-     // 儲存文檔
+        content.setDocument(document);  // 将内容与文档关联
+        document.setContent(content);    // 设置 Document 的 Content
+
+        // 保存文档和内容
         documentRepository.save(document);
         contentRepository.save(content);
 
         return document;
     }
+
+
 
 
     // 根據 userId 查詢所有文檔

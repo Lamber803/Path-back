@@ -29,7 +29,7 @@ return http.csrf(csrf -> csrf.disable()) //關閉了 CSRF 保護
 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 .cors(cors -> cors.configurationSource(corsConfigurationSource())) //啟用自訂義的cors
         .authorizeHttpRequests(authz -> authz// 設定請求授權規則
-            .requestMatchers("/api/users/register", "/api/users/login").permitAll()  // 註冊和登錄不需要認證
+            .requestMatchers("/","/api/users/register", "/api/users/login").permitAll()  // 註冊和登錄不需要認證
             .requestMatchers(request -> "websocket".equalsIgnoreCase(request.getHeader("Upgrade"))).permitAll()// 只允許帶有 Upgrade: websocket 的請求
             .anyRequest().authenticated()) // 其他請求需要認證器
         .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)  // 配置 JWT 過濾器

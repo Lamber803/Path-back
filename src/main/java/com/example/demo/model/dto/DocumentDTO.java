@@ -27,6 +27,5 @@ this.title = title;
 this.createdAt = createdAt;
 this.updatedAt = updatedAt;
 this.htmlContent = htmlContent;
-this.url = url;
 }
 }
