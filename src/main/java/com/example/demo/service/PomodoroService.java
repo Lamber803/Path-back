@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.exception.PomodoroNotFoundException;
 import com.example.demo.model.dto.PomodoroDTO;
 import com.example.demo.model.entity.Pomodoro;
 import com.example.demo.repository.PomodoroRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PomodoroService {
@@ -35,7 +37,6 @@ public class PomodoroService {
         User user = userOptional.get();
 
         Pomodoro pomodoro = new Pomodoro();
-        pomodoro.setPomodoroId(pomodoroDTO.getPomodoroId());
         pomodoro.setPomodoroName(pomodoroDTO.getPomodoroName());
         pomodoro.setWorkDuration(pomodoroDTO.getWorkDuration());
         pomodoro.setBreakDuration(pomodoroDTO.getBreakDuration());
@@ -45,26 +46,64 @@ public class PomodoroService {
         return pomodoroRepository.save(pomodoro);
     }
 
-    // 获取某用户所有的Pomodoro记录
-    public List<Pomodoro> getAllPomodorosForUser(Integer userId) {
-        return pomodoroRepository.findByUser_UserId(userId);
+ // 获取某用户所有的Pomodoro记录
+    public List<PomodoroDTO> getAllPomodorosForUser(Integer userId) {
+        // 从数据库获取该用户的所有Pomodoro记录
+        List<Pomodoro> pomodoros = pomodoroRepository.findByUser_UserId(userId);
+
+        // 将所有Pomodoro实体转换成PomodoroDTO
+        List<PomodoroDTO> pomodoroDTOs = pomodoros.stream()
+                .map(pomodoro -> new PomodoroDTO(
+                        pomodoro.getPomodoroId(),
+                        pomodoro.getPomodoroName(),
+                        pomodoro.getWorkDuration(),
+                        pomodoro.getBreakDuration(),
+                        pomodoro.getTotalTime(),
+                        pomodoro.getUser().getUserId()
+                ))
+                .collect(Collectors.toList());
+
+        // 返回PomodoroDTO列表
+        return pomodoroDTOs;
     }
 
-    // 更新Pomodoro记录
-    public Pomodoro updatePomodoro(Integer pomodoroId, PomodoroDTO pomodoroDTO) {
-        Pomodoro existingPomodoro = pomodoroRepository.findById(pomodoroId)
-                .orElseThrow(() -> new RuntimeException("Pomodoro记录不存在"));
 
-        existingPomodoro.setPomodoroName(pomodoroDTO.getPomodoroName());
-        existingPomodoro.setWorkDuration(pomodoroDTO.getWorkDuration());
-        existingPomodoro.setBreakDuration(pomodoroDTO.getBreakDuration());
-        existingPomodoro.setTotalTime(pomodoroDTO.getTotalTime()); // 更新累计时间
+    public Pomodoro updatePomodoroName(PomodoroDTO pomodoroDTO) {
+        // 从数据库查找 Pomodoro 实体
+        Pomodoro pomodoro = pomodoroRepository.findByPomodoroIdAndUser_UserId(pomodoroDTO.getPomodoroId(), pomodoroDTO.getUserId())
+                .orElseThrow(() -> new PomodoroNotFoundException("Pomodoro not found"));
 
-        return pomodoroRepository.save(existingPomodoro);
+        // 更新名称
+        pomodoro.setPomodoroName(pomodoroDTO.getPomodoroName());
+
+        // 保存更新后的 Pomodoro 对象
+        return pomodoroRepository.save(pomodoro);
     }
+
+    public Pomodoro updatePomodoroTimer(PomodoroDTO pomodoroDTO) {
+        // 从数据库查找 Pomodoro 实体
+        Pomodoro pomodoro = pomodoroRepository.findByPomodoroIdAndUser_UserId(pomodoroDTO.getPomodoroId(), pomodoroDTO.getUserId())
+                .orElseThrow(() -> new PomodoroNotFoundException("Pomodoro not found"));
+
+        // 更新计时器设置
+        pomodoro.setWorkDuration(pomodoroDTO.getWorkDuration());
+        pomodoro.setBreakDuration(pomodoroDTO.getBreakDuration());
+        pomodoro.setTotalTime(pomodoro.getTotalTime()+ pomodoroDTO.getTotalTime());
+
+        // 保存更新后的 Pomodoro 对象
+        return pomodoroRepository.save(pomodoro);
+    }
+
+
 
     // 删除Pomodoro记录
-    public void deletePomodoro(Integer pomodoroId) {
-        pomodoroRepository.deleteById(pomodoroId);
+    public void deletePomodoro(PomodoroDTO pomodoroDTO) {
+        // 使用 pomodoroId 和 userId 查找对应的 Pomodoro 记录，确保它属于当前用户
+        Pomodoro pomodoro = pomodoroRepository.findByPomodoroIdAndUser_UserId(pomodoroDTO.getPomodoroId(), pomodoroDTO.getUserId())
+                .orElseThrow(() -> new PomodoroNotFoundException("Pomodoro not found or does not belong to user"));
+
+        // 删除 Pomodoro 实体
+        pomodoroRepository.delete(pomodoro);
     }
+
 }

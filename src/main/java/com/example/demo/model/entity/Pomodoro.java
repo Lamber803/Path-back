@@ -13,10 +13,11 @@ import lombok.NoArgsConstructor;
 public class Pomodoro {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pomodoro_id")
     private Integer pomodoroId;  // Pomodoro ID
 
-    @ManyToOne(fetch = FetchType.LAZY)  // 多對一關聯，用戶ID
+    @ManyToOne(fetch = FetchType.EAGER)  // 多對一關聯，用戶ID
     @JoinColumn(name = "user_id", nullable = false)
     private User user;  // 關聯到 User 實體
 
