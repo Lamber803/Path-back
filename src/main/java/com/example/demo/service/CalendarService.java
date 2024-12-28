@@ -40,7 +40,7 @@ public class CalendarService {
         calendar.setEventEndTime(calendarDTO.getEventEndTime());
         calendar.setEventMood(calendarDTO.getEventMood());
         calendar.setEventColor(calendarDTO.getEventColor());
-        calendar.setEventRepeat(calendarDTO.getEventRepeat());
+//        calendar.setEventRepeat(calendarDTO.getEventRepeat());
         calendar.setIsCompleted(false);  // 初始為未完成
         calendar.setUser(user);
 
@@ -60,39 +60,53 @@ public class CalendarService {
                         calendar.getEventEndTime(),
                         calendar.getEventMood(),
                         calendar.getEventColor(),
-                        calendar.getEventRepeat(),
+//                        calendar.getEventRepeat(),
                         calendar.getIsCompleted()
                 ))
                 .collect(Collectors.toList());
     }
 
-    // 更新事件的名稱
-    public Calendar updateEventTitle(CalendarDTO calendarDTO) {
+    // 更新事件
+    public Calendar updateEvent(CalendarDTO calendarDTO) {
+        // 查找對應事件
         Calendar calendar = calendarRepository.findByEventIdAndUser_UserId(calendarDTO.getEventId(), calendarDTO.getUserId())
                 .orElseThrow(() -> new CalendarNotFoundException("事件未找到"));
 
-        calendar.setEventTitle(calendarDTO.getEventTitle());
+        
+        if (calendarDTO.getEventTitle() != null) {
+            calendar.setEventTitle(calendarDTO.getEventTitle());
+        }
+        if (calendarDTO.getEventLocation() != null) {
+            calendar.setEventLocation(calendarDTO.getEventLocation());
+        }
+        if (calendarDTO.getEventStartTime() != null) {
+            calendar.setEventStartTime(calendarDTO.getEventStartTime());
+        }
+        if (calendarDTO.getEventEndTime() != null) {
+            calendar.setEventEndTime(calendarDTO.getEventEndTime());
+        }
+        if (calendarDTO.getEventMood() != null) {
+            calendar.setEventMood(calendarDTO.getEventMood());
+        }
+        if (calendarDTO.getEventColor() != null) {
+            calendar.setEventColor(calendarDTO.getEventColor());
+        }
+
+        // 保存并返回更新后的事件
         return calendarRepository.save(calendar);
     }
 
-    // 更新事件的計時器設置
-    public Calendar updateEventTimer(CalendarDTO calendarDTO) {
-        Calendar calendar = calendarRepository.findByEventIdAndUser_UserId(calendarDTO.getEventId(), calendarDTO.getUserId())
-                .orElseThrow(() -> new CalendarNotFoundException("事件未找到"));
 
-        calendar.setEventStartTime(calendarDTO.getEventStartTime());
-        calendar.setEventEndTime(calendarDTO.getEventEndTime());
-        return calendarRepository.save(calendar);
-    }
-
-    // 標記事件為完成
-    public Calendar markEventAsCompleted(Integer eventId, Integer userId) {
+    public Calendar toggleEventCompletion(Integer eventId, Integer userId, boolean isCompleted) {
+        // 查找指定事件
         Calendar calendar = calendarRepository.findByEventIdAndUser_UserId(eventId, userId)
                 .orElseThrow(() -> new CalendarNotFoundException("事件未找到"));
 
-        calendar.setIsCompleted(true);
-        return calendarRepository.save(calendar);
+        // 根据isCompleted值更新事件状态
+        calendar.setIsCompleted(isCompleted);
+        return calendarRepository.save(calendar);  // 保存更新后的事件
     }
+
 
     // 刪除事件
     public void deleteEvent(CalendarDTO calendarDTO) {

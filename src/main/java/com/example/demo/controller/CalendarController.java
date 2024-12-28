@@ -33,25 +33,30 @@ public class CalendarController {
     }
 
     // 更新事件的標題
-    @PutMapping("/events/title")
-    public ResponseEntity<Calendar> updateEventTitle(@RequestBody CalendarDTO calendarDTO) {
-        Calendar calendar = calendarService.updateEventTitle(calendarDTO);
+    @PutMapping("/events")
+    public ResponseEntity<Calendar> updateEvent(@RequestBody CalendarDTO calendarDTO) {
+        Calendar calendar = calendarService.updateEvent(calendarDTO);
         return ResponseEntity.ok(calendar);
     }
 
-    // 更新事件的計時器設置
-    @PutMapping("/events/timer")
-    public ResponseEntity<Calendar> updateEventTimer(@RequestBody CalendarDTO calendarDTO) {
-        Calendar calendar = calendarService.updateEventTimer(calendarDTO);
-        return ResponseEntity.ok(calendar);
+    @PutMapping("/events/complete")
+    public ResponseEntity<?> toggleEventCompletion(
+    		@RequestBody CalendarDTO calendarDTO) {  // 用isCompleted来判断是否是标记为完成，还是取消完成
+    	try {
+            Calendar calendar = calendarService.toggleEventCompletion(calendarDTO.getEventId(), calendarDTO.getUserId(), calendarDTO.getIsCompleted());
+            if (calendar != null) {
+                return ResponseEntity.ok(calendar);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update event: " + e.getMessage());
+        }
     }
 
-    // 標記事件為完成
-    @PutMapping("/events/{eventId}/complete")
-    public ResponseEntity<Calendar> completeEvent(@PathVariable Integer eventId, @RequestParam Integer userId) {
-        Calendar calendar = calendarService.markEventAsCompleted(eventId, userId);
-        return ResponseEntity.ok(calendar);
-    }
+
 
     // 刪除事件
     @DeleteMapping("/events")

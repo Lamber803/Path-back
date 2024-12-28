@@ -128,8 +128,8 @@ public class DocumentController {
 
 
     // 更新文檔
-    @PutMapping("/update/{documentId}")
-    public ResponseEntity<DocumentDTO> updateDocument(@PathVariable Integer documentId,
+    @PutMapping("/update")
+    public ResponseEntity<DocumentDTO> updateDocument(@RequestParam Integer documentId,
                                                       @RequestBody UpdateDocumentDTO updateDocumentDTO) {
         try {
             // 呼叫 DocumentService 更新文檔
@@ -158,8 +158,8 @@ public class DocumentController {
     }
 
     // 刪除文檔
-    @DeleteMapping("/{documentId}")
-    public ResponseEntity<HttpStatus> deleteDocument(@PathVariable Integer documentId) {
+    @DeleteMapping
+    public ResponseEntity<HttpStatus> deleteDocument(@RequestParam Integer documentId) {
         try {
             // 呼叫 DocumentService 刪除文檔
             boolean isDeleted = documentService.deleteDocument(documentId);

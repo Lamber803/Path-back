@@ -19,7 +19,12 @@ public class CalendarDTO {
     private Date eventEndTime; // 事件結束時間
     private String eventMood; // 事件心情
     private String eventColor; // 事件顏色
-    private String eventRepeat; // 重復規則
+//    private String eventRepeat; // 重復規則
     private Boolean isCompleted; // 是否完成
-
+    	
+    public CalendarDTO(Integer eventId, Integer userId,Boolean isCompleted) {
+		this.eventId = eventId;
+		this.userId = userId;
+		this.isCompleted = isCompleted;
+	}
 }
