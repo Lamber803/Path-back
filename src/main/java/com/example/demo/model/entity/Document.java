@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,5 +47,10 @@ public class Document {
     private Content content;  // 該文檔的內容
     
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
-    private List<Attachment> files;  // 存储与文档关联的文件
+    private List<Attachment> files;  // 存儲關聯的文件
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)  // 關聯到群組
+    @JsonIgnore // 忽略该字段的序列化
+    private DocumentGroup documentGroup;  // 指向該文檔所屬的群組
 }

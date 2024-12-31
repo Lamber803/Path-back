@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
+import com.example.demo.exception.FlashcardGroupNotFoundException;
 import com.example.demo.model.dto.FlashcardGroupDTO;
 import com.example.demo.model.entity.FlashcardGroup;
 import com.example.demo.service.FlashcardGroupService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,19 @@ public class FlashcardGroupController {
             return ResponseEntity.ok(flashcardGroupDTO);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+    
+    // 删除字卡组
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteFlashcardGroup(@RequestParam Integer groupId) {
+        try {
+            flashcardGroupService.deleteFlashcardGroup(groupId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (FlashcardGroupNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

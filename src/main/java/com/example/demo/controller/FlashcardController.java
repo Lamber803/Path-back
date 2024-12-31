@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/flashcard")
@@ -46,21 +47,42 @@ public class FlashcardController {
         }
     }
 
-    // 将字卡添加到收藏
-    @PostMapping("/add-to-favorites")
-    public ResponseEntity<Void> addFlashcardToFavorites(@RequestParam Integer groupId, @RequestParam Integer flashcardId) {
+ // 切換字卡的收藏狀態
+    @PostMapping("/toggle-favorite")
+    public ResponseEntity<Flashcard> toggleFavorite(@RequestParam Integer flashcardId, @RequestParam boolean isFavorite) {
         try {
-            flashcardService.addFlashcardToFavorites(groupId, flashcardId);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            // 這裡直接傳遞 isFavorite 值，無需切換
+            Flashcard updatedFlashcard = flashcardService.setFavorite(flashcardId, isFavorite);
+            return ResponseEntity.ok(updatedFlashcard);  // 返回更新後的字卡
         } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
-    // 获取某字卡组的所有收藏字卡
+ // 删除字卡
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteFlashcard(@RequestParam Integer flashcardId) {
+        try {
+            // 调用服务层删除字卡
+            flashcardService.deleteFlashcard(flashcardId);
+            return ResponseEntity.ok("字卡刪除成功");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body("字卡不存在");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("刪除字卡時發生錯誤");
+        }
+    }
+
+
+    // 获取某字卡组的所有收藏字卡（現在不需要了）
+    // 這個方法可以移除，因為收藏邏輯已經集成到 `Flashcard` 內部的 `isFavorite` 屬性，並且可以直接從 `getFlashcardsByGroupId` 返回已標註為收藏的字卡。
+    // 如果需要可以加上一個過濾，只返回 `isFavorite` 為 `true` 的字卡：
     @GetMapping("/favorites")
     public ResponseEntity<List<FlashcardDTO>> getFavoriteFlashcards(@RequestParam Integer groupId) {
-        List<FlashcardDTO> favoriteFlashcards = flashcardService.getFavoriteFlashcards(groupId);
+        List<FlashcardDTO> favoriteFlashcards = flashcardService.getFlashcardsByGroupId(groupId).stream()
+            .filter(flashcardDTO -> flashcardDTO.getIsFavorite() != null && flashcardDTO.getIsFavorite()) // 只過濾收藏的字卡
+            .collect(Collectors.toList());
+
         return ResponseEntity.ok(favoriteFlashcards);
     }
 }

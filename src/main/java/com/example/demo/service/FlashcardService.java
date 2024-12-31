@@ -3,10 +3,8 @@ package com.example.demo.service;
 import com.example.demo.model.dto.FlashcardDTO;
 import com.example.demo.model.entity.Flashcard;
 import com.example.demo.model.entity.FlashcardGroup;
-import com.example.demo.model.entity.FlashcardGroupFavorite;
 import com.example.demo.repository.FlashcardRepository;
 import com.example.demo.repository.FlashcardGroupRepository;
-import com.example.demo.repository.FlashcardGroupFavoriteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +21,6 @@ public class FlashcardService {
     @Autowired
     private FlashcardGroupRepository flashcardGroupRepository;
 
-    @Autowired
-    private FlashcardGroupFavoriteRepository flashcardGroupFavoriteRepository;
-
     // 創建新的字卡
     public Flashcard saveFlashcard(FlashcardDTO flashcardDTO) {
         Optional<FlashcardGroup> flashcardGroupOptional = flashcardGroupRepository.findById(flashcardDTO.getGroupId());
@@ -38,6 +33,7 @@ public class FlashcardService {
         flashcard.setWord(flashcardDTO.getWord());
         flashcard.setDefinition(flashcardDTO.getDefinition());
         flashcard.setFlashcardGroup(flashcardGroup);
+        flashcard.setIsFavorite(false);  // 新建字卡默認不為收藏
 
         return flashcardRepository.save(flashcard);
     }
@@ -47,12 +43,15 @@ public class FlashcardService {
         List<Flashcard> flashcards = flashcardRepository.findByFlashcardGroup_GroupId(groupId);
         return flashcards.stream()
                 .map(flashcard -> new FlashcardDTO(
+                        flashcard.getFlashcardId(),  // 加入 flashcardId
                         flashcard.getFlashcardGroup().getGroupId(),
                         flashcard.getWord(),
-                        flashcard.getDefinition()
+                        flashcard.getDefinition(),
+                        flashcard.getIsFavorite()  // 返回收藏狀態
                 ))
                 .collect(Collectors.toList());
     }
+
 
     // 根據字卡ID查詢字卡
     public FlashcardDTO getFlashcardById(Integer flashcardId) {
@@ -62,47 +61,44 @@ public class FlashcardService {
         }
 
         Flashcard flashcard = flashcardOptional.get();
-        return new FlashcardDTO(flashcard.getFlashcardId(),
+        return new FlashcardDTO(
+                flashcard.getFlashcardId(),
                 flashcard.getFlashcardGroup().getGroupId(),
                 flashcard.getWord(),
-                flashcard.getDefinition());
+                flashcard.getDefinition(),
+                flashcard.getIsFavorite());  // 返回字卡收藏狀態
     }
 
-    // 收藏字卡
-    public void addFlashcardToFavorites(Integer groupId, Integer flashcardId) {
-        if (flashcardGroupFavoriteRepository.existsByFlashcardGroup_GroupIdAndFlashcard_FlashcardId(groupId, flashcardId)) {
-            throw new RuntimeException("字卡已經在收藏庫中");
-        }
+    // 切換字卡的收藏狀態
+ // 切換字卡的收藏狀態
+    public Flashcard setFavorite(Integer flashcardId, boolean isFavorite) {
+        // 查找指定的字卡
+        Flashcard flashcard = flashcardRepository.findById(flashcardId)
+                .orElseThrow(() -> new RuntimeException("字卡不存在"));
 
-        Optional<FlashcardGroup> flashcardGroupOptional = flashcardGroupRepository.findById(groupId);
-        if (!flashcardGroupOptional.isPresent()) {
-            throw new RuntimeException("字卡組不存在");
-        }
+        // 設置字卡的收藏狀態
+        flashcard.setIsFavorite(isFavorite);
 
-        Optional<Flashcard> flashcardOptional = flashcardRepository.findById(flashcardId);
-        if (!flashcardOptional.isPresent()) {
-            throw new RuntimeException("字卡不存在");
-        }
-
-        FlashcardGroup flashcardGroup = flashcardGroupOptional.get();
-        Flashcard flashcard = flashcardOptional.get();
-
-        FlashcardGroupFavorite favorite = new FlashcardGroupFavorite();
-        favorite.setFlashcardGroup(flashcardGroup);
-        favorite.setFlashcard(flashcard);
-        flashcardGroupFavoriteRepository.save(favorite);
+        // 保存並返回更新後的字卡
+        return flashcardRepository.save(flashcard);
     }
 
-    // 查詢某字卡組的收藏字卡
-    public List<FlashcardDTO> getFavoriteFlashcards(Integer groupId) {
-        List<FlashcardGroupFavorite> favorites = flashcardGroupFavoriteRepository.findByFlashcardGroup_GroupId(groupId);
-        return favorites.stream()
-                .map(favorite -> new FlashcardDTO(
-                        favorite.getFlashcard().getFlashcardId(),
-                        favorite.getFlashcardGroup().getGroupId(),
-                        favorite.getFlashcard().getWord(),
-                        favorite.getFlashcard().getDefinition()
-                ))
-                .collect(Collectors.toList());
+    // 删除指定字卡
+    public void deleteFlashcard(Integer flashcardId) {
+        try {
+            // 查找字卡
+            Optional<Flashcard> flashcardOptional = flashcardRepository.findById(flashcardId);
+            if (!flashcardOptional.isPresent()) {
+                throw new RuntimeException("字卡不存在");
+            }
+
+            // 删除字卡
+            Flashcard flashcard = flashcardOptional.get();
+            flashcardRepository.delete(flashcard);
+        } catch (Exception e) {
+            System.err.println("刪除字卡時發生錯誤: " + e.getMessage());
+            throw e;
+        }
     }
+
 }

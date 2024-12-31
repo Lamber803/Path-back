@@ -16,5 +16,4 @@ public class FlashcardGroupDTO {
 	
 	private String groupName;  // 字卡組名稱
 	private List<FlashcardDTO> flashcards;  // 該字卡組內的所有字卡
-    private List<FlashcardDTO> favoriteFlashcards;  // 該字卡組收藏的字卡
 }

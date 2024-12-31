@@ -1,12 +1,12 @@
 package com.example.demo.controller;
 
-import com.example.demo.exception.DocumentNotFoundException;
 import com.example.demo.model.dto.CreateDocumentDTO;
 import com.example.demo.model.dto.DocumentDTO;
 import com.example.demo.model.dto.UpdateDocumentDTO;
 import com.example.demo.model.entity.Document;
 import com.example.demo.service.DocumentService;
-import com.example.demo.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -22,156 +21,93 @@ public class DocumentController {
 
     @Autowired
     private DocumentService documentService;
-    @Autowired
-    private UserService userService;  // 假設您有 UserService 來處理使用者相關邏輯
 
+    // 創建新文檔
     @PostMapping("/create")
-    public ResponseEntity<DocumentDTO> createDocument(@RequestParam Integer userId, 
-                                                      @RequestParam(required = false) String title,
-                                                      @RequestParam(required = false) String htmlContent,
-                                                      @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+    public ResponseEntity<DocumentDTO> createDocument(
+            @RequestParam Integer userId, // 通过 query param 获取 userId
+            @RequestParam String createDocumentDTO, // 获取 createDocumentDTO 的 JSON 字符串
+            @RequestParam(required = false) List<MultipartFile> files) { // 获取文件
+
         try {
-            // 創建 CreateDocumentDTO 對象
-            CreateDocumentDTO createDocumentDTO = new CreateDocumentDTO(title, htmlContent);
+            // 将 JSON 字符串转换为 CreateDocumentDTO 对象
+            ObjectMapper objectMapper = new ObjectMapper();
+            CreateDocumentDTO documentDTO = objectMapper.readValue(createDocumentDTO, CreateDocumentDTO.class);
 
-            // 呼叫 DocumentService 來創建文檔
-            Document document = documentService.createDocument(userId, createDocumentDTO, files);
+            // 调用 service 层创建文档
+            Document document = documentService.createDocument(userId, documentDTO, files);
 
-            // 檢查 document 的 content 是否為 null，避免 NullPointerException
-            DocumentDTO documentDTO;
-            if (document.getContent() != null) {
-                documentDTO = new DocumentDTO(
+            // 将文档转换为 DocumentDTO 以返回给前端
+            DocumentDTO result = new DocumentDTO(
                     document.getDocumentId(),
                     document.getUser().getUserId(),
                     document.getTitle(),
                     document.getCreatedAt(),
                     document.getUpdatedAt(),
-                    document.getContent().getHtmlContent()  // 確保 content 不為 null
-                );
-            } else {
-                documentDTO = new DocumentDTO(
-                    document.getDocumentId(),
-                    document.getUser().getUserId(),
-                    document.getTitle(),
-                    document.getCreatedAt(),
-                    document.getUpdatedAt(),
-                    "No content"  // 預設安全內容，避免 NPE
-                );
-            }
-
-            // 返回創建的 DocumentDTO
-            return new ResponseEntity<>(documentDTO, HttpStatus.CREATED);
-        } catch (Exception e) {
-            // 打印錯誤堆疊跟蹤
-            e.printStackTrace();
-            // 如果創建過程中有錯誤，返回 500 錯誤
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
-    // 查詢所有文檔（假設是查詢當前用戶的文檔）
-    @GetMapping("/search")
-    public ResponseEntity<List<DocumentDTO>> getDocuments(@RequestParam Integer userId) {
-        try {
-            // 呼叫 DocumentService 查詢該用戶的所有文檔
-            List<Document> documents = documentService.getDocumentsByUserId(userId);
-
-            // 將所有 Document 實體轉換成 DocumentDTO
-            List<DocumentDTO> documentDTOs = documents.stream()
-                    .map(document -> new DocumentDTO(
-                            document.getDocumentId(),
-                            document.getUser().getUserId(),
-                            document.getTitle(),
-                            document.getCreatedAt(),
-                            document.getUpdatedAt(),
-                            document.getContent().getHtmlContent()
-                            ))
-                    .collect(Collectors.toList());
-
-            return new ResponseEntity<>(documentDTOs, HttpStatus.OK);
-        } catch (Exception e) {
-            // 如果查詢過程中有錯誤，返回 500 錯誤
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
- // 查詢單一文檔
-    @GetMapping("/read")
-    public ResponseEntity<DocumentDTO> getDocument(@RequestParam Integer documentId) {
-        try {
-            // 呼叫 DocumentService 查詢指定 ID 的文檔
-            Document document = documentService.getDocumentById(documentId);
-
-            // 檢查文檔是否存在
-            if (document == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 如果找不到文檔，返回 404
-            }
-
-            // 將 Document 實體轉換成 DocumentDTO 並返回
-            DocumentDTO documentDTO = new DocumentDTO(
-                    document.getDocumentId(),
-                    document.getUser().getUserId(),
-                    document.getTitle(),
-                    document.getCreatedAt(),
-                    document.getUpdatedAt(),
-                    document.getContent().getHtmlContent()
+                    document.getContent().getHtmlContent(),
+                    document.getDocumentGroup().getGroupId()
             );
 
-            return new ResponseEntity<>(documentDTO, HttpStatus.OK);
-        } catch (DocumentNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 找不到文档时返回 404
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 其他异常返回 500
+            // 错误处理
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
+    // 获取指定文档组的所有文档
+    @GetMapping("/group")
+    public ResponseEntity<List<DocumentDTO>> getDocumentsByGroupId(@RequestParam Integer groupId) {
+        try {
+            List<DocumentDTO> documentDTOs = documentService.getDocumentsByGroupId(groupId);
+            return ResponseEntity.ok(documentDTOs);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 获取指定文档的详细信息
+    @GetMapping
+    public ResponseEntity<DocumentDTO> getDocumentById(@RequestParam Integer documentId) {
+        try {
+            DocumentDTO documentDTO = documentService.getDocumentById(documentId);
+            return ResponseEntity.ok(documentDTO);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 
     // 更新文檔
     @PutMapping("/update")
-    public ResponseEntity<DocumentDTO> updateDocument(@RequestParam Integer documentId,
-                                                      @RequestBody UpdateDocumentDTO updateDocumentDTO) {
-        try {
-            // 呼叫 DocumentService 更新文檔
-            Document updatedDocument = documentService.updateDocument(documentId, updateDocumentDTO);
+    public ResponseEntity<DocumentDTO> updateDocument(
+    		@RequestParam Integer documentId,
+            @RequestBody UpdateDocumentDTO updateDocumentDTO) {
 
-            // 檢查文檔是否存在
-            if (updatedDocument == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-            // 將更新後的 Document 實體轉換成 DocumentDTO 並返回
+        Document updatedDocument = documentService.updateDocument(documentId, updateDocumentDTO);
+        if (updatedDocument != null) {
             DocumentDTO documentDTO = new DocumentDTO(
                     updatedDocument.getDocumentId(),
                     updatedDocument.getUser().getUserId(),
                     updatedDocument.getTitle(),
                     updatedDocument.getCreatedAt(),
                     updatedDocument.getUpdatedAt(),
-                    updatedDocument.getContent().getHtmlContent()
+                    updatedDocument.getContent().getHtmlContent(),
+                    updatedDocument.getDocumentGroup().getGroupId()
             );
-
-            return new ResponseEntity<>(documentDTO, HttpStatus.OK);
-        } catch (Exception e) {
-            // 如果更新過程中有錯誤，返回 500 錯誤
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.ok(documentDTO);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
     // 刪除文檔
-    @DeleteMapping
-    public ResponseEntity<HttpStatus> deleteDocument(@RequestParam Integer documentId) {
-        try {
-            // 呼叫 DocumentService 刪除文檔
-            boolean isDeleted = documentService.deleteDocument(documentId);
-
-            if (isDeleted) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);  // 刪除成功
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // 沒有找到文檔
-            }
-        } catch (Exception e) {
-            // 如果刪除過程中有錯誤，返回 500 錯誤
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteDocument(@RequestParam Integer documentId) {
+        boolean isDeleted = documentService.deleteDocument(documentId);
+        if (isDeleted) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 }

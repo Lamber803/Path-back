@@ -1,10 +1,12 @@
 package com.example.demo.service;
 
-import com.example.demo.model.dto.FlashcardDTO;
+import com.example.demo.exception.FlashcardGroupNotFoundException;
 import com.example.demo.model.dto.FlashcardGroupDTO;
+import com.example.demo.model.entity.Flashcard;
 import com.example.demo.model.entity.FlashcardGroup;
 import com.example.demo.model.entity.User;
 import com.example.demo.repository.FlashcardGroupRepository;
+import com.example.demo.repository.FlashcardRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,9 +20,12 @@ public class FlashcardGroupService {
 
     @Autowired
     private FlashcardGroupRepository flashcardGroupRepository;
-
+    
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private FlashcardRepository flashcardRepository;
 
     @Autowired
     private FlashcardService flashcardService;
@@ -48,8 +53,7 @@ public class FlashcardGroupService {
                         group.getGroupId(),
                         group.getUser().getUserId(),
                         group.getGroupName(),
-                        flashcardService.getFlashcardsByGroupId(group.getGroupId()),
-                        flashcardService.getFavoriteFlashcards(group.getGroupId())
+                        flashcardService.getFlashcardsByGroupId(group.getGroupId())
                 ))
                 .collect(Collectors.toList());
     }
@@ -66,8 +70,32 @@ public class FlashcardGroupService {
                 flashcardGroup.getGroupId(),
                 flashcardGroup.getUser().getUserId(),
                 flashcardGroup.getGroupName(),
-                flashcardService.getFlashcardsByGroupId(flashcardGroup.getGroupId()),
-                flashcardService.getFavoriteFlashcards(flashcardGroup.getGroupId())
+                flashcardService.getFlashcardsByGroupId(flashcardGroup.getGroupId())
         );
     }
+    
+    public void deleteFlashcardGroup(Integer groupId) {
+        try {
+            Optional<FlashcardGroup> flashcardGroupOptional = flashcardGroupRepository.findById(groupId);
+            if (!flashcardGroupOptional.isPresent()) {
+                throw new FlashcardGroupNotFoundException("字卡組不存在");
+            }
+
+            FlashcardGroup flashcardGroup = flashcardGroupOptional.get();
+
+            // 刪除字卡組下的所有字卡
+            List<Flashcard> flashcards = flashcardRepository.findByFlashcardGroup_GroupId(groupId);
+            for (Flashcard flashcard : flashcards) {
+                flashcardRepository.delete(flashcard);  // 正確刪除字卡
+            }
+
+            // 刪除字卡組
+            flashcardGroupRepository.delete(flashcardGroup);
+        } catch (Exception e) {
+            System.err.println("刪除字卡組時發生錯誤: " + e.getMessage());
+            throw e;
+        }
+    }
+
+
 }

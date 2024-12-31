@@ -29,4 +29,7 @@ public class Flashcard {
     
     @Column(name = "definition", nullable = false, columnDefinition = "text")
     private String definition;  // 字卡的定義
+    
+    @Column(name = "is_favorite", nullable = false)
+    private Boolean isFavorite; // 表示字卡是否被標記為收藏
 }
