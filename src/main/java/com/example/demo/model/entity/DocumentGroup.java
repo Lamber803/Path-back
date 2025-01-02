@@ -21,7 +21,7 @@ public class DocumentGroup {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore // 忽略该字段的序列化
+    @JsonIgnore // 忽略該字段的序列化
     private User user;  // 群組創建者，與 `User` 一對多關聯
 
     @Column(name = "group_name", nullable = false, columnDefinition = "varchar(255)")

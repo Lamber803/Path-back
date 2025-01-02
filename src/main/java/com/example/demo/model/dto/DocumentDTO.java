@@ -46,4 +46,8 @@ public class DocumentDTO {
 		this.documentId = documentId;
 		this.title = title;
 	}
+	
+	public DocumentDTO(String htmlContent ) {
+		this.htmlContent = htmlContent;
+	}
 }

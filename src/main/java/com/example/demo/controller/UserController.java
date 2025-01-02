@@ -29,7 +29,7 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
- // 用戶註冊，密碼由前端傳遞，後端進行哈希處理
+    // 用戶註冊，密碼由前端傳遞，後端進行哈希處理
     @PostMapping("/register")
     public ResponseEntity<User> registerUser(@RequestBody RegistAndLoginRequest userRegistrationRequest) {
         try {
@@ -53,7 +53,7 @@ public class UserController {
         try {
             // 使用 service 層進行登入邏輯
             userService.loginUser(loginRequest.getUsername(), loginRequest.getPassword());
-         // 生成 JWT Token
+            // 生成 JWT Token
             String jwtToken = JwtUtil.generateToken(loginRequest.getUsername());
 
             // 返回 token 给客户端
@@ -94,7 +94,7 @@ public class UserController {
         }
     }
 
- // 刪除帳號
+    // 刪除帳號
     @PostMapping("/delete-account")
     public ResponseEntity<String> deleteAccount(@RequestBody DeleteAccountRequest deleteAccountRequest) {
         try {

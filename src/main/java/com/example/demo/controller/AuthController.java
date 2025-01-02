@@ -27,14 +27,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> loginUser(@RequestBody com.example.demo.model.dto.RegistAndLoginRequest loginRequest) {
         try {
-            // 创建认证令牌
+            // 創建認證令牌
             UsernamePasswordAuthenticationToken authenticationToken = 
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
 
-            // 通过 AuthenticationManager 进行认证
+            // 通過 AuthenticationManager 進行認證
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-            // 如果认证成功，获取认证信息
+            // 如果認證成功，獲取認證訊息
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
             // 生成 JWT Token

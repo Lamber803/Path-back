@@ -18,7 +18,7 @@ public class FlashcardController {
     @Autowired
     private FlashcardService flashcardService;
 
-    // 创建新的字卡
+    // 創建新的字卡
     @PostMapping("/create")
     public ResponseEntity<Flashcard> createFlashcard(@RequestBody FlashcardDTO flashcardDTO) {
         try {
@@ -29,14 +29,14 @@ public class FlashcardController {
         }
     }
 
-    // 获取某字卡组下的所有字卡
+    // 獲取某字卡組下的所有字卡
     @GetMapping("/group")
     public ResponseEntity<List<FlashcardDTO>> getFlashcardsByGroupId(@RequestParam Integer groupId) {
         List<FlashcardDTO> flashcards = flashcardService.getFlashcardsByGroupId(groupId);
         return ResponseEntity.ok(flashcards);
     }
 
-    // 获取指定ID的字卡
+    // 獲取指定ID的字卡
     @GetMapping
     public ResponseEntity<FlashcardDTO> getFlashcardById(@RequestParam Integer flashcardId) {
         try {
@@ -47,7 +47,7 @@ public class FlashcardController {
         }
     }
 
- // 切換字卡的收藏狀態
+    // 切換字卡的收藏狀態
     @PostMapping("/toggle-favorite")
     public ResponseEntity<Flashcard> toggleFavorite(@RequestParam Integer flashcardId, @RequestParam boolean isFavorite) {
         try {
@@ -59,11 +59,10 @@ public class FlashcardController {
         }
     }
 
- // 删除字卡
+	// 刪除字卡
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteFlashcard(@RequestParam Integer flashcardId) {
         try {
-            // 调用服务层删除字卡
             flashcardService.deleteFlashcard(flashcardId);
             return ResponseEntity.ok("字卡刪除成功");
         } catch (RuntimeException e) {
@@ -74,7 +73,7 @@ public class FlashcardController {
     }
 
 
-    // 获取某字卡组的所有收藏字卡（現在不需要了）
+    // 獲取某字卡組的所有收藏字卡（現在不需要了）
     // 這個方法可以移除，因為收藏邏輯已經集成到 `Flashcard` 內部的 `isFavorite` 屬性，並且可以直接從 `getFlashcardsByGroupId` 返回已標註為收藏的字卡。
     // 如果需要可以加上一個過濾，只返回 `isFavorite` 為 `true` 的字卡：
     @GetMapping("/favorites")

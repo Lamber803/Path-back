@@ -21,7 +21,7 @@ public class Flashcard {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
-    @JsonIgnore // 忽略该字段的序列化
+    @JsonIgnore // 忽略該字段的序列化
     private FlashcardGroup flashcardGroup;  // 該字卡屬於哪個字卡組
     
     @Column(name = "word", nullable = false, columnDefinition = "varchar(255)")

@@ -19,7 +19,7 @@ public class FlashcardGroupController {
     @Autowired
     private FlashcardGroupService flashcardGroupService;
 
-    // 创建新的字卡组
+    // 創建新的字卡组
     @PostMapping("/create")
     public ResponseEntity<FlashcardGroup> createFlashcardGroup(@RequestBody FlashcardGroupDTO flashcardGroupDTO) {
         try {
@@ -30,14 +30,14 @@ public class FlashcardGroupController {
         }
     }
 
-    // 获取用户所有字卡组
+    // 獲取用戶所有字卡组
     @GetMapping("/user")
     public ResponseEntity<List<FlashcardGroupDTO>> getAllFlashcardGroupsByUserId(@RequestParam Integer userId) {
         List<FlashcardGroupDTO> flashcardGroups = flashcardGroupService.getAllFlashcardGroupsByUserId(userId);
         return ResponseEntity.ok(flashcardGroups);
     }
 
-    // 获取指定字卡组详细信息
+    // 獲取指定字卡組詳細信息
     @GetMapping
     public ResponseEntity<FlashcardGroupDTO> getFlashcardGroupById(@RequestParam Integer groupId) {
         try {
@@ -48,7 +48,7 @@ public class FlashcardGroupController {
         }
     }
     
-    // 删除字卡组
+    // 刪除字卡组
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteFlashcardGroup(@RequestParam Integer groupId) {
         try {

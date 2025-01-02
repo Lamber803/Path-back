@@ -3,7 +3,9 @@ package com.example.demo.controller;
 import com.example.demo.model.dto.CreateDocumentDTO;
 import com.example.demo.model.dto.DocumentDTO;
 import com.example.demo.model.dto.UpdateDocumentDTO;
+import com.example.demo.model.entity.Attachment;
 import com.example.demo.model.entity.Document;
+import com.example.demo.service.AttachmentService;
 import com.example.demo.service.DocumentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -22,40 +25,58 @@ public class DocumentController {
     @Autowired
     private DocumentService documentService;
 
-    // 創建新文檔
+    @Autowired
+    private AttachmentService attachmentService;
+
+   
+    // 創建文檔
     @PostMapping("/create")
-    public ResponseEntity<DocumentDTO> createDocument(
-            @RequestParam Integer userId, // 通过 query param 获取 userId
-            @RequestParam String createDocumentDTO, // 获取 createDocumentDTO 的 JSON 字符串
-            @RequestParam(required = false) List<MultipartFile> files) { // 获取文件
-
+    public ResponseEntity<DocumentDTO> createDocument(@RequestParam Integer userId, 
+                                                      @RequestParam(required = false) String title,
+                                                      @RequestParam(required = false) String htmlContent,
+                                                      @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                                                      @RequestParam Integer groupId) {  // 接收 groupId
         try {
-            // 将 JSON 字符串转换为 CreateDocumentDTO 对象
-            ObjectMapper objectMapper = new ObjectMapper();
-            CreateDocumentDTO documentDTO = objectMapper.readValue(createDocumentDTO, CreateDocumentDTO.class);
+            // 創建 CreateDocumentDTO 對象
+            CreateDocumentDTO createDocumentDTO = new CreateDocumentDTO(title, htmlContent, groupId);
 
-            // 调用 service 层创建文档
-            Document document = documentService.createDocument(userId, documentDTO, files);
+            // 呼叫 DocumentService 來創建文檔
+            Document document = documentService.createDocument(userId, createDocumentDTO, files);
 
-            // 将文档转换为 DocumentDTO 以返回给前端
-            DocumentDTO result = new DocumentDTO(
+            // 檢查 document 的 content 是否為 null，避免 NullPointerException
+            DocumentDTO documentDTO;
+            if (document.getContent() != null) {
+                documentDTO = new DocumentDTO(
                     document.getDocumentId(),
                     document.getUser().getUserId(),
                     document.getTitle(),
                     document.getCreatedAt(),
                     document.getUpdatedAt(),
-                    document.getContent().getHtmlContent(),
-                    document.getDocumentGroup().getGroupId()
-            );
+                    document.getContent().getHtmlContent()
+                );
+            } else {
+                documentDTO = new DocumentDTO(
+                    document.getDocumentId(),
+                    document.getUser().getUserId(),
+                    document.getTitle(),
+                    document.getCreatedAt(),
+                    document.getUpdatedAt(),
+                    "No content"
+                );
+            }
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+            // 返回創建的 DocumentDTO
+            return new ResponseEntity<>(documentDTO, HttpStatus.CREATED);
         } catch (Exception e) {
-            // 错误处理
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            // 打印錯誤堆疊跟蹤
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // 获取指定文档组的所有文档
+
+
+    // 獲取群組內所有文檔
     @GetMapping("/group")
     public ResponseEntity<List<DocumentDTO>> getDocumentsByGroupId(@RequestParam Integer groupId) {
         try {
@@ -66,7 +87,7 @@ public class DocumentController {
         }
     }
 
-    // 获取指定文档的详细信息
+    // 獲取指定文檔內訊息
     @GetMapping
     public ResponseEntity<DocumentDTO> getDocumentById(@RequestParam Integer documentId) {
         try {

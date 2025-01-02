@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -46,11 +47,17 @@ public class Document {
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Content content;  // 該文檔的內容
     
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
-    private List<Attachment> files;  // 存儲關聯的文件
+ // 假设一个文档包含多个附件
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment> attachments = new ArrayList<>();
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)  // 關聯到群組
     @JsonIgnore // 忽略该字段的序列化
     private DocumentGroup documentGroup;  // 指向該文檔所屬的群組
+    
+ // 添加附件的方法
+    public void addAttachment(Attachment attachment) {
+        this.attachments.add(attachment);
+    }
 }

@@ -16,4 +16,6 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findByDocumentGroup_GroupId(Integer groupId);
     
     Optional<Document> findByDocumentIdAndUser_UserId(Integer documentId, Integer userId);  // 查詢指定使用者的特定文檔
+    
+    Optional<Document> findById(Integer documentId);  // 查詢特定文檔
 }

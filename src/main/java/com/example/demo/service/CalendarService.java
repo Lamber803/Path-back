@@ -92,7 +92,7 @@ public class CalendarService {
             calendar.setEventColor(calendarDTO.getEventColor());
         }
 
-        // 保存并返回更新后的事件
+        // 保存并返回更新後的事件
         return calendarRepository.save(calendar);
     }
 
@@ -102,7 +102,7 @@ public class CalendarService {
         Calendar calendar = calendarRepository.findByEventIdAndUser_UserId(eventId, userId)
                 .orElseThrow(() -> new CalendarNotFoundException("事件未找到"));
 
-        // 根据isCompleted值更新事件状态
+        // 根據isCompleted值更新事件状态
         calendar.setIsCompleted(isCompleted);
         return calendarRepository.save(calendar);  // 保存更新后的事件
     }

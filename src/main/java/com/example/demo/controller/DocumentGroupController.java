@@ -18,20 +18,19 @@ public class DocumentGroupController {
     @Autowired
     private DocumentGroupService documentGroupService;
 
-    // 创建新的文档组
+    // 創建文檔組
     @PostMapping("/create")
     public ResponseEntity<DocumentGroup> createDocumentGroup(@RequestBody DocumentGroupDTO documentGroupDTO) {
         try {
-            // 调用 service 层创建文档组
             DocumentGroup createdGroup = documentGroupService.createDocumentGroup(documentGroupDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdGroup);
         } catch (RuntimeException e) {
-            // 捕获异常并返回400 Bad Request
+            // 捕捉異常
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 
-    // 获取指定用户的所有文档组
+    // 獲取指定用戶文檔組
     @GetMapping("/user")
     public ResponseEntity<List<DocumentGroupDTO>> getAllDocumentGroupsByUserId(@RequestParam Integer userId) {
         try {
@@ -44,34 +43,32 @@ public class DocumentGroupController {
         }
     }
 
-    // 获取指定文档组的详细信息
+    // 獲取文檔組相關訊息
     @GetMapping
     public ResponseEntity<DocumentGroupDTO> getDocumentGroupById(@RequestParam Integer groupId) {
         try {
-            // 调用 service 层根据ID获取文档组
             DocumentGroupDTO documentGroupDTO = documentGroupService.getDocumentGroupById(groupId);
             return ResponseEntity.ok(documentGroupDTO);
         } catch (DocumentGroupNotFoundException e) {
-            // 如果文档组不存在，返回 404
+            // 如果文檔組不存在，返回 404
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
-            // 处理其他异常，返回 500
+            //處理其他異常
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // 删除指定文档组及其所有文档
+    // 刪除指定文檔組
     @DeleteMapping
     public ResponseEntity<Void> deleteDocumentGroup(@RequestParam Integer groupId) {
         try {
-            // 调用 service 层删除文档组
             documentGroupService.deleteDocumentGroup(groupId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();  // 返回204 No Content
         } catch (DocumentGroupNotFoundException e) {
-            // 如果文档组不存在，返回 404
+            // 如果文檔組不存在，返回 404
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
-            // 处理其他异常，返回 500
+            // 處理其他異常，返回 500
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
